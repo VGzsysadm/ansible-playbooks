@@ -47,3 +47,20 @@
         src: /dev/sdb1
         path: /gluster
         state: mounted
+    - name: create gluster volume
+      gluster_volume:
+        state: present
+        name: gluster-storage
+        bricks: /gluster/gluster-storage
+        rebalance: yes
+        cluster:
+          - 192.168.1.47
+          - 192.168.1.48
+      run_once: true
+    - name: Set multiple options on GlusterFS volume
+      gluster_volume:
+        state: present
+        name: gluster-storage
+        options:
+          { nfs.disable: 'off'
+          }
