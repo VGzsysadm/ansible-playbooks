@@ -1,0 +1,49 @@
+---
+- name: Gluster install
+  hosts: GlusterFS
+
+  tasks:
+
+    - name: Update repository
+      become: true
+      apt:
+        upgrade: no
+        update_cache: yes
+        cache_valid_time: 86400
+    - name: install base packages
+      apt: pkg={{item}} state=present update_cache=yes cache_valid_time=604800
+      with_items:
+        - glusterfs-server
+        - parted
+    - name: enable service glusterfs-server and ensure it is not masked
+      systemd:
+        name: glusterfs-server
+        enabled: yes
+        masked: no
+    - name: Enable rpcbind
+      systemd:
+        name: rpcbind
+        enabled: yes
+        masked: no
+    - name: Start rpcbind
+      systemd:
+        name: rpcbind
+        state: started
+    # create a directory if it doesn't exist
+    - file:
+        path: /var/lib/glusterfs/dist-replica
+        state: directory
+        mode: 0755
+    - parted:
+        device: /dev/sdb
+        number: 1
+        flags: [ lvm ]
+        state: present
+    - filesystem:
+        fstype: ext4
+        dev: /dev/sdb1
+    - mount:
+        fstype: ext4
+        src: /dev/sdb1
+        path: /gluster
+        state: mounted
