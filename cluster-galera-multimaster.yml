@@ -37,4 +37,4 @@
     - name: Stop service mysql, if started
       service:
         name: mysql
-state: stopped
+        state: stopped
