@@ -1,0 +1,40 @@
+---
+- name: Mariadb-cluster multi master install
+  hosts: ClusterMysql
+
+  tasks:
+
+    - name: install base packages
+      apt: pkg={{item}} state=present update_cache=yes cache_valid_time=604800
+      with_items:
+        - software-properties-common
+        - dirmngr
+        - rsync
+    - name: Add an apt key by id from a keyserver
+      apt_key:
+        keyserver: keyserver.ubuntu.com
+        id: F1656F24C74CD1D8
+    - name: Install repository
+      apt_repository: repo='deb [arch=amd64,i386,ppc64el] http://mirror.sax.uk.as61049.net/mariadb/repo/10.3/debian stretch main' state=present update_cache=yes
+    - name: Update repository
+      become: true
+      apt:
+        upgrade: no
+        update_cache: yes
+        cache_valid_time: 86400
+    - name: install maria galera
+      apt: pkg={{item}} state=present update_cache=yes cache_valid_time=604800
+      with_items:
+        - mariadb-server-10.1
+        - galera
+    - name: Copy the config to remote nodes
+      copy:
+        src: /etc/ansible/mysql-cluster/galera.cnf
+        dest: /etc/mysql/mariadb.conf.d/galera.cnf
+        owner: root
+        group: root
+        mode: 0644
+    - name: Stop service mysql, if started
+      service:
+        name: mysql
+state: stopped
