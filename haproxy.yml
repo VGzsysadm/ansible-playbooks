@@ -1,0 +1,34 @@
+---
+- name: HAproxy install
+  hosts: haproxy
+
+  tasks:
+
+    - name: Update repository
+      become: true
+      apt:
+        upgrade: no
+        update_cache: yes
+        cache_valid_time: 86400
+    - name: install base packages
+      apt: pkg={{item}} state=present update_cache=yes cache_valid_time=604800
+      with_items:
+        - haproxy
+        - heartbeat
+    - name: Copy the config to remote nodes
+      copy:
+        src: /etc/ansible/haproxy/haproxy
+        dest: /etc/haproxy/haproxy
+        owner: root
+        group: root
+        mode: 0644
+    - name: Copy the config to remote nodes
+      copy:
+        src: /etc/ansible/haproxy/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: 0644
+    - lineinfile:
+        path: /etc/sysctl.conf
+        line: 'net.ipv4.ip_nonlocal_bind=1'
