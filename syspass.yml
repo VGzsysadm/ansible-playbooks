@@ -1,4 +1,4 @@
-# Unnoficial playbook for install Syspass
+# Unofficial playbook for install Syspass
 # Requeriments:
 #    1- Host with ansible installed
 #    2- Remote host with sudo installed and debian 9.x OS
