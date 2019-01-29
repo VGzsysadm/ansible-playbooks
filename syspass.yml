@@ -3,12 +3,12 @@
 #    1- Host with ansible installed
 #    2- Remote host with sudo installed and debian 9.x OS
 # Define the hosts group at ansible host /etc/ansible/hosts
-# [syspass]
-# remote_host_ip_address
+#   [syspass]
+#   remote_host_ip_address
 # Copy your rsa key to the remote host
-# ssh-copy-id -i ~/.ssh/id_rsa root@remote_host_ip_address
+#   ssh-copy-id -i ~/.ssh/id_rsa root@remote_host_ip_address
 # Run this playbook in your ansible server
-# ansible-playbook syspass.yml
+#   ansible-playbook syspass.yml
 # Access to http://remote_host_ip_address/sysPass/index.php
 ######Database connection######
 ######user:Syspassuserdb######
