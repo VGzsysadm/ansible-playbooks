@@ -15,6 +15,7 @@
 ######password:S6Pa4w0Rdx######
 ######database:syspass######
 ######Enable hosting mode######
+###### Tested with ansible 2.7.5
 ---
 - name: Syspass installation
   hosts: syspass
