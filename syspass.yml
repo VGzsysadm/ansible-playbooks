@@ -9,7 +9,7 @@
 #   ssh-copy-id -i ~/.ssh/id_rsa root@remote_host_ip_address
 # Run this playbook in your ansible server
 #   ansible-playbook syspass.yml
-# Access to http://remote_host_ip_address/sysPass/index.php
+# Access to http://remote_host_ip_address/SysPass/index.php
 ######Database connection######
 ######user:Syspassuserdb######
 ######password:S6Pa4w0Rdx######
