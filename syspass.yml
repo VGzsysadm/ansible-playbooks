@@ -1,0 +1,101 @@
+# Unnoficial playbook for install Syspass
+# Requeriments:
+#    1- Host with ansible installed
+#    2- Remote host with sudo installed and debian 9.x OS
+# Define the hosts group at ansible host /etc/ansible/hosts
+# [syspass]
+# remote_host_ip_address
+# Copy your rsa key to the remote host
+# ssh-copy-id -i ~/.ssh/id_rsa root@remote_host_ip_address
+# Run this playbook in your ansible server
+# ansible-playbook syspass.yml
+# Access to http://remote_host_ip_address/sysPass/index.php
+######Database connection######
+######user:Syspassuserdb######
+######password:S6Pa4w0Rdx######
+######database:syspass######
+######Enable hosting mode######
+---
+- name: Syspass installation
+  hosts: syspass
+
+  tasks:
+
+    - name: Update repository
+      become: true
+      apt:
+        upgrade: no
+        update_cache: yes
+        cache_valid_time: 86400
+    - name: install base packages
+      apt: pkg={{item}} state=present update_cache=yes cache_valid_time=604800
+      with_items:
+        - locales
+        - apache2
+        - libapache2-mod-php7.0
+        - php-pear
+        - php7.0
+        - php7.0-cgi
+        - php7.0-cli
+        - php7.0-common
+        - php7.0-fpm
+        - php7.0-gd
+        - php7.0-json
+        - php7.0-mysql
+        - php7.0-readline
+        - php7.0-curl
+        - php7.0-intl
+        - php7.0-ldap
+        - php7.0-mcrypt
+        - php7.0-xml
+        - php7.0-mbstring
+        - php7.0-xdebug
+        - python
+        - python-mysqldb
+        - unzip
+        - wget
+        - mysql-server
+        - composer
+    - name: Restart apache2
+      systemd:
+        name: apache2
+        state: restarted
+    - name: Create database syspass
+      mysql_db:
+       name: syspass
+       state: present
+    - mysql_user:
+        name: Syspassuserdb
+        password: S6Pa4w0Rdx
+        priv: 'syspass.*:ALL'
+        state: present
+    - name: Download Syspass
+      get_url:
+        url: https://github.com/nuxsmin/sysPass/archive/3.0.4.19012601.zip
+        dest: /tmp/sysPass-3.0.4.19012601.zip
+        mode: 0440
+    - name: Extract sysPass.zip into /var/www/html/sysPass
+      unarchive:
+         src: /tmp/sysPass-3.0.4.19012601.zip
+         dest: /var/www/html/
+         remote_src: yes
+    - name: Set permissions
+      file:
+        path: /var/www/html/sysPass-3.0.4.19012601
+        owner: www-data
+        group: www-data
+        mode: 0750
+        recurse: true
+    - name: Set permissions
+      file:
+        path: "{{ item }}"
+        mode: 0750
+        recurse: true
+      with_items:
+        - /var/www/html/sysPass-3.0.4.19012601/app/config
+        - /var/www/html/sysPass-3.0.4.19012601/app/backup
+    - name: Rename path
+      command: mv /var/www/html/sysPass-3.0.4.19012601 /var/www/html/SysPass
+    - composer:
+        command: install
+        working_dir: /var/www/html/SysPass
