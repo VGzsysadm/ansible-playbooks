@@ -1,0 +1,225 @@
+---
+- name: GLPI Installation
+  hosts: glpi
+  tasks:
+
+# Updating packages
+
+  - name: Running apt-get update
+    apt:
+      update_cache: yes
+    when: ansible_distribution == 'Debian'
+  - name: Running yum check-update
+    yum: list=updates update_cache=true
+    when: ansible_distribution == 'CentOS'
+
+# Installing third packages for Debian 9
+
+  - name: Install base applications
+    apt:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - apt-transport-https
+      - lsb-release
+      - ca-certificates
+      - wget
+      - unzip
+    when: ansible_distribution == 'Debian'
+  - name: Add Ondrej Sury's apt key (Debian).
+    apt_key:
+      url: https://packages.sury.org/php/apt.gpg
+      state: present
+    when: ansible_distribution == 'Debian'
+  - name: Add Ondrej Sury's repo (Debian).
+    apt_repository:
+      repo: "deb https://packages.sury.org/php/ {{ ansible_distribution_release }} main"
+      state: present
+    when: ansible_distribution == 'Debian'
+  - name: Running apt-get update
+    apt:
+      upgrade: no
+      update_cache: yes
+    when: ansible_distribution == 'Debian'
+  - name: Install third party applications
+    apt:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - php7.2
+      - php7.2-cli
+      - php7.2-common
+      - php7.2-curl
+      - php7.2-gd
+      - php7.2-mysqli
+      - php7.2-json
+      - php7.2-fileinfo
+      - php7.2-mbstring
+      - php7.2-simplexml
+      - php7.2-xml
+      - libxml2-dev
+      - php7.2-ldap
+      - php7.2-imap
+      - php7.2-xmlrpc
+      - php7.2-apcu
+      - php-cas
+      - php-pear
+      - openssl
+      - python
+      - python-mysqldb
+      - apache2
+      - mysql-server
+    when: ansible_distribution == 'Debian'
+  - name: Verification server running
+    service:
+      name: apache2
+      state: started
+    when: ansible_distribution == 'Debian'
+
+# Installing third packages for Centos 7
+
+  - name: Install base applications
+    yum:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - epel-release
+      - yum-utils
+      - wget
+      - unzip
+      - libselinux-python
+    when: ansible_distribution == 'CentOS'
+  - selinux:
+      state: disabled
+    when: ansible_distribution == 'CentOS'
+  - name: Install EPEL repository
+    yum:
+      name: http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm
+      state: present
+    when: ansible_distribution == 'CentOS'
+  - name: Install remi repo.
+    yum:
+      name: http://rpms.remirepo.net/enterprise/remi-release-{{ ansible_distribution_major_version }}.rpm
+      state: present
+    when: ansible_distribution == 'CentOS'
+  - name: Import remi GPG key.
+    rpm_key:
+      key: http://rpms.remirepo.net/RPM-GPG-KEY-remi
+      state: present
+    when: ansible_distribution == 'CentOS'
+  - name: Configure MariaDB Repository
+    yum_repository:
+      name: mariadb
+      description: MariaDB
+      baseurl: http://yum.mariadb.org/10.2/centos7-amd64
+      gpgkey: https://yum.mariadb.org/RPM-GPG-KEY-MariaDB
+      gpgcheck: true
+      state: present
+    when: ansible_distribution == 'CentOS'
+  - name: Running yum check-update
+    yum: list=updates update_cache=true
+    when: ansible_distribution == 'CentOS'
+  - name: Install third party applications
+    yum:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - php72
+      - php72-php
+      - php72-php-cli
+      - php72-php-common
+      - php72-php-curl
+      - php72-php-gd
+      - php72-php-mysqli
+      - php72-php-json
+      - php72-php-fileinfo
+      - php72-php-mbstring
+      - php72-php-simplexml
+      - php72-php-xml
+      - php72-php-ldap
+      - php72-php-imap
+      - php72-php-xmlrpc
+      - php72-php-apcu
+      - php72-php-opcache
+      - php-pear-CAS
+      - openssl
+      - python
+      - MySQL-python
+      - httpd
+      - mariadb-server
+    when: ansible_distribution == 'CentOS'
+  - name: Verification server running
+    service:
+      name: httpd
+      state: started
+    when: ansible_distribution == 'CentOS'
+  - name: Open port 80 for http access
+    firewalld:
+      service: http
+      permanent: true
+      state: enabled
+    when: ansible_distribution == 'CentOS'
+  - name: Restart the firewalld service to load in the firewall changes
+    service:
+      name: firewalld
+      state: restarted
+    when: ansible_distribution == 'CentOS'
+
+# Installing GLPI
+  - name: Downloading GLPI 9.3.3
+    get_url:
+      url: https://github.com/glpi-project/glpi/releases/download/9.3.3/glpi-9.3.3.tgz
+      dest: /tmp/glpi-9.3.3.tgz
+      mode: 0440
+  - name: Extracting glpi-9.3.3.tgz into /var/www/html/glpi9.3.3
+    unarchive:
+      src: /tmp/glpi-9.3.3.tgz
+      dest: /var/www/html/
+      remote_src: yes
+  - name: Adding permissions
+    file:
+      path: /var/www/html/glpi
+      owner: www-data
+      group: www-data
+      mode: 0750
+      recurse: true
+    when: ansible_distribution == 'Debian'
+  - name: Adding permissions
+    file:
+      path: /var/www/html/glpi
+      owner: apache
+      group: apache
+      mode: 0750
+      recurse: true
+    when: ansible_distribution == 'CentOS'
+  - replace:
+      path: /etc/apache2/apache2.conf
+      regexp: '(<[dD]irectory /var/www/>[^<]*)AllowOverride None'
+      replace: '\1AllowOverride All'
+    when: ansible_distribution == 'Debian'
+  - replace:
+      path: /etc/httpd/conf/httpd.conf
+      regexp: '(<[dD]irectory "/var/www/html/">[^<]*)AllowOverride None'
+      replace: '\1AllowOverride All'
+    when: ansible_distribution == 'CentOS'
+  - name: enable service httpd and ensure it is not masked
+    systemd:
+      name: mysql
+      enabled: yes
+      masked: no
+    when: ansible_distribution == 'CentOS'
+  - name: Make sure a service is running
+    systemd:
+      state: started
+      name: mysql
+# Creatign database
+
+  - name: Create database syspass
+    mysql_db:
+      name: glpidb
+      state: present
+  - mysql_user:
+      name: glpiuser
+      password: glpiuser
+      priv: 'glpidb.*:ALL'
+      state: present
