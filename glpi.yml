@@ -1,3 +1,5 @@
+##### Available for Debian 9 and Centos 7
+##### Confirm remote host has sudo installed and the rsa key added.
 ---
 - name: GLPI Installation
   hosts: glpi
@@ -26,22 +28,25 @@
       - wget
       - unzip
     when: ansible_distribution == 'Debian'
-  - name: Add Ondrej Sury's apt key (Debian).
+
+  - name: Getting PHP 7.2 Repository
     apt_key:
       url: https://packages.sury.org/php/apt.gpg
       state: present
     when: ansible_distribution == 'Debian'
-  - name: Add Ondrej Sury's repo (Debian).
+
+  - name: Adding PHP 7.2 Repository
     apt_repository:
       repo: "deb https://packages.sury.org/php/ {{ ansible_distribution_release }} main"
       state: present
     when: ansible_distribution == 'Debian'
+
   - name: Running apt-get update
     apt:
-      upgrade: no
       update_cache: yes
     when: ansible_distribution == 'Debian'
-  - name: Install third party applications
+
+  - name: Install third parties applications
     apt:
       name: "{{ packages }}"
     vars:
@@ -70,10 +75,11 @@
       - apache2
       - mysql-server
     when: ansible_distribution == 'Debian'
-  - name: Verification server running
+
+  - name: Restart service httpd, in all cases
     service:
       name: apache2
-      state: started
+      state: restarted
     when: ansible_distribution == 'Debian'
 
 # Installing third packages for Centos 7
@@ -92,22 +98,26 @@
   - selinux:
       state: disabled
     when: ansible_distribution == 'CentOS'
-  - name: Install EPEL repository
+
+  - name: Getting EPEL Repository
     yum:
       name: http://nginx.org/packages/centos/6/noarch/RPMS/nginx-release-centos-6-0.el6.ngx.noarch.rpm
       state: present
     when: ansible_distribution == 'CentOS'
-  - name: Install remi repo.
+
+  - name: Getting PHP 7.2 Repository
     yum:
       name: http://rpms.remirepo.net/enterprise/remi-release-{{ ansible_distribution_major_version }}.rpm
       state: present
     when: ansible_distribution == 'CentOS'
-  - name: Import remi GPG key.
+
+  - name: Adding PHP 7.2 Repository
     rpm_key:
       key: http://rpms.remirepo.net/RPM-GPG-KEY-remi
       state: present
     when: ansible_distribution == 'CentOS'
-  - name: Configure MariaDB Repository
+
+  - name: Configure MariaDB Repository for CentOS
     yum_repository:
       name: mariadb
       description: MariaDB
@@ -116,10 +126,12 @@
       gpgcheck: true
       state: present
     when: ansible_distribution == 'CentOS'
+
   - name: Running yum check-update
     yum: list=updates update_cache=true
     when: ansible_distribution == 'CentOS'
-  - name: Install third party applications
+
+  - name: Install third parties applications
     yum:
       name: "{{ packages }}"
     vars:
@@ -148,24 +160,27 @@
       - httpd
       - mariadb-server
     when: ansible_distribution == 'CentOS'
-  - name: Verification server running
+  - name: Verification webserver is running
     service:
       name: httpd
       state: started
     when: ansible_distribution == 'CentOS'
+
   - name: Open port 80 for http access
     firewalld:
       service: http
       permanent: true
       state: enabled
     when: ansible_distribution == 'CentOS'
-  - name: Restart the firewalld service to load in the firewall changes
+
+  - name: Restarting the firewalld service
     service:
       name: firewalld
       state: restarted
     when: ansible_distribution == 'CentOS'
 
 # Installing GLPI
+
   - name: Downloading GLPI 9.3.3
     get_url:
       url: https://github.com/glpi-project/glpi/releases/download/9.3.3/glpi-9.3.3.tgz
@@ -199,22 +214,34 @@
     when: ansible_distribution == 'Debian'
   - replace:
       path: /etc/httpd/conf/httpd.conf
-      regexp: '(<[dD]irectory "/var/www/html/">[^<]*)AllowOverride None'
-      replace: '\1AllowOverride All'
+      regexp: '(<[dD]irectory "/var/www/html">)*([#]\n[\s]*)AllowOverride None'
+      replace: 'AllowOverride All'
     when: ansible_distribution == 'CentOS'
-  - name: enable service httpd and ensure it is not masked
+  - name: Enabling service mysql at CentOS
     systemd:
       name: mysql
       enabled: yes
       masked: no
     when: ansible_distribution == 'CentOS'
-  - name: Make sure a service is running
+  - name: Enabling service httpd at CentOS
+    systemd:
+      name: httpd
+      enabled: yes
+      masked: no
+    when: ansible_distribution == 'CentOS'
+  - name: Verification webserver is running in Centos
+    service:
+      name: httpd
+      state: started
+    when: ansible_distribution == 'CentOS'
+  - name: Verification database is running in Centos
     systemd:
       state: started
       name: mysql
+
 # Creatign database
 
-  - name: Create database syspass
+  - name: Creating database and user, username glpiuser password fGh@67dM$xY78$flO
     mysql_db:
       name: glpidb
       state: present
@@ -223,3 +250,5 @@
       password: glpiuser
       priv: 'glpidb.*:ALL'
       state: present
+  - name: Rebooting whole remote host
+    reboot:
