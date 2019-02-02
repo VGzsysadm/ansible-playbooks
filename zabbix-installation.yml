@@ -139,8 +139,8 @@
     args:
       executable: /bin/bash
     when: ansible_distribution == 'CentOS'
-    
-  - replace: 
+
+  - replace:
       path: /etc/zabbix/zabbix_server.conf
       regexp: '(..)DBPassword='
       replace: 'DBPassword=fGh@67dM$xY78$flO'
@@ -178,7 +178,7 @@
       executable: /bin/bash
     when: ansible_distribution == 'CentOS'
 
-  - firewalld: Adding firewalld rules on CentOS
+  - firewalld:
       service: http
       permanent: yes
       state: enabled
@@ -195,5 +195,5 @@
       name: zabbix-server
       state: started
 
-  - name: Rebooting... after reboot you are able to acces to http://ip.adress/zabbix/ in order to finish the configuration.
+  - name: Rebooting... after reboot you are able to acces to http://ip.address/zabbix/ in order to finish the configuration.
     reboot:
