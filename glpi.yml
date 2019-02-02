@@ -241,7 +241,7 @@
 
 # Creatign database
 
-  - name: Creating database and user, username glpiuser password fGh@67dM$xY78$flO. Now you can acces through web http://ip_address/glpi/
+  - name: Creating database and user, username glpiuser password glpiuser Now you can acces through web http://ip_address/glpi/
     mysql_db:
       name: glpidb
       state: present
