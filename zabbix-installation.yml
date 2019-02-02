@@ -126,17 +126,17 @@
       priv: 'zabbix.*:ALL'
       state: present
 
-#  - name: Adding database on Debian
-#    shell: zcat /usr/share/doc/zabbix-server-mysql/create.sql.gz | mysql zabbix
-#    args:
-#      executable: /bin/bash
-#    when: ansible_distribution == 'Debian'
-#
-#  - name: Adding database on CentOS
-#    shell: zcat /usr/share/doc/zabbix-server-mysql-4.0.3/create.sql.gz | mysql zabbix
-#    args:
-#      executable: /bin/bash
-#    when: ansible_distribution == 'CentOS'
+  - name: Adding database on Debian
+    shell: zcat /usr/share/doc/zabbix-server-mysql/create.sql.gz | mysql zabbix
+    args:
+      executable: /bin/bash
+    when: ansible_distribution == 'Debian'
+
+  - name: Adding database on CentOS
+    shell: zcat /usr/share/doc/zabbix-server-mysql-4.0.3/create.sql.gz | mysql zabbix
+    args:
+      executable: /bin/bash
+    when: ansible_distribution == 'CentOS'
 
   - replace:
       path: /etc/zabbix/zabbix_server.conf
