@@ -139,8 +139,7 @@
     args:
       executable: /bin/bash
     when: ansible_distribution == 'CentOS'
-
-  - name: Configuring values
+    
   - replace: 
       path: /etc/zabbix/zabbix_server.conf
       regexp: '(..)DBPassword='
