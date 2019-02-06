@@ -135,7 +135,7 @@
     when: ansible_distribution == 'Debian'
 
   - name: Dumping database on CentOS
-    shell: zcat /usr/share/doc/zabbix-server-mysql-4.0.3/create.sql.gz | mysql zabbix
+    shell: zcat /usr/share/doc/zabbix-server-mysql-4.0.4/create.sql.gz | mysql zabbix
     args:
       executable: /bin/bash
     when: ansible_distribution == 'CentOS'
