@@ -1,0 +1,72 @@
+---
+- name: Zabbix Agent Installation
+  hosts: zabbix-agent
+  tasks:
+
+  - name: Running apt-get update
+    apt:
+      update_cache: yes
+    when: ansible_distribution == 'Debian'
+
+  - name: Running yum check-update
+    yum: list=updates update_cache=true
+    when: ansible_distribution == 'CentOS'
+
+# Installing third packages for Debian 9
+
+  - name: Install base applications
+    apt:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - zabbix-agent
+    when: ansible_distribution == 'Debian'
+
+# Installing third packages for Centos 7
+
+  - name: Install base applications
+    yum:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - zabbix-agent
+    when: ansible_distribution == 'CentOS'
+
+  - firewalld:
+      port: 10050-10051/tcp
+      permanent: yes
+      state: enabled
+    when: ansible_distribution == 'CentOS'
+
+  - name: Enabling services
+    shell: systemctl enable zabbix-agent
+    args:
+      executable: /bin/bash
+
+  - name: Set hostconfig file
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^Server=.*'
+      insertafter: ^Server=.*=
+      line: Server=192.168.1.215
+
+  - name: Set hostconfig file
+    lineinfile:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '^Hostname=.*'
+      insertafter: ^# Hostname=
+      line: Hostname={{ ansible_hostname }}
+
+  - replace:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '# EnableRemoteCommands=.*'
+      replace: 'EnableRemoteCommands=1'
+
+  - replace:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '# ListenPort=.*'
+      replace: 'ListenPort=10050'
+  - name: Restart services
+    shell: systemctl restart zabbix-agent
+    args:
+      executable: /bin/bash
