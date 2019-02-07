@@ -149,6 +149,11 @@
       path: /etc/zabbix/zabbix_server.conf
       regexp: '(..)DBHost=localhost='
       replace: 'zabbix'
+      
+  - replace:
+      path: /etc/zabbix/zabbix_agentd.conf
+      regexp: '(..)#ListenIP=0.0.0.0'
+      replace: 'ListenIP=0.0.0.0'
 
   - replace:
       path: /etc/zabbix/apache.conf
