@@ -1,0 +1,76 @@
+---
+- name: Grafana Installation
+  hosts: grafana
+  tasks:
+
+  - name: Running yum check-update
+    yum: list=updates update_cache=true
+    when: ansible_distribution == 'CentOS'
+
+  # Installing third packages for Centos 7
+
+  - name: Install base applications
+    yum:
+      name: "{{ packages }}"
+    vars:
+      packages:
+      - yum-utils
+      - wget
+      - policycoreutils-python
+    when: ansible_distribution == 'CentOS'
+
+  - name: Downloading Grafana 5.4.3
+    get_url:
+      url: https://dl.grafana.com/oss/release/grafana-5.4.3-1.x86_64.rpm
+      dest: /tmp/grafana-5.4.3-1.x86_64.rpm
+      mode: 0440
+    when: ansible_distribution == 'CentOS'
+
+  - name: install grafana rpm from a local file
+    yum:
+      name: /tmp/grafana-5.4.3-1.x86_64.rpm
+      state: present
+    when: ansible_distribution == 'CentOS'
+    
+  - name: Allowing port 3000 http_port_t
+    shell: semanage port -a -t http_port_t -p tcp 3000
+    args:
+      executable: /bin/bash
+    when: ansible_distribution == 'CentOS'
+    
+  - firewalld:
+      port: 3000/tcp
+      permanent: yes
+      state: enabled
+    when: ansible_distribution == 'CentOS'
+    
+  - name: Enabling grafana service
+    systemd:
+      name: grafana-server
+      enabled: yes
+      masked: no
+    when: ansible_distribution == 'CentOS'
+    
+  - name: Start service grafana-server, if not started
+    service:
+      name: grafana-server
+      state: started
+    when: ansible_distribution == 'CentOS'
+      
+  - name: Installing zabbix-grafana plugin
+    shell: grafana-cli plugins install alexanderzobnin-zabbix-app
+    args:
+      executable: /bin/bash
+    when: ansible_distribution == 'CentOS'
+    
+  - name: Reloading firewalld
+    shell: firewall-cmd --reload
+    args:
+      executable: /bin/bash
+    when: ansible_distribution == 'CentOS'
+  
+  - name: Restarting grafana-server services
+    service:
+      name: grafana-server
+      state: restarted
+    when: ansible_distribution == 'CentOS'
